@@ -1,0 +1,29 @@
+name: Rclone
+version: 0.0.1
+slug: rclone
+description: Rclone daemon and web UI, integrated with Home Assistant Ingress.
+url: https://github.com/llalon/hassio-addons
+startup: application
+boot: auto
+init: false
+arch:
+  - amd64
+ingress: true
+ingress_port: 8099
+ingress_stream: true
+panel_icon: mdi:cloud-sync
+panel_title: Rclone
+panel_admin: true
+ports: {}
+map:
+  - type: app_config
+    read_only: false
+    path: /config
+  - type: share
+    read_only: false
+  - type: media
+    read_only: false
+  - type: backup
+    read_only: true
+options: {}
+schema: {}
