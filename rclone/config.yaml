@@ -16,6 +16,9 @@ panel_title: Rclone
 panel_admin: true
 ports: {}
 map:
+  - type: data
+    path: /root/.cache/rclone
+    read_only: false
   - type: app_config
     read_only: false
     path: /root/.config/rclone
