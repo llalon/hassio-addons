@@ -1,4 +1,17 @@
 ARG BUILD_FROM=ghcr.io/home-assistant/base:3.24
+FROM node:24-alpine3.24 AS webui
+
+ARG RCLONE_WEB_VERSION=1.1.13
+
+WORKDIR /webui
+RUN apk add --no-cache curl tar \
+    && curl -fsSL "https://codeload.github.com/rclone/rclone-web/tar.gz/refs/tags/${RCLONE_WEB_VERSION}" \
+       | tar -xz --strip-components=1
+COPY patch-webui.mjs /tmp/patch-webui.mjs
+RUN npm ci \
+    && node /tmp/patch-webui.mjs \
+    && npm run build
+
 FROM ${BUILD_FROM}
 
 ARG BUILD_ARCH
@@ -18,6 +31,7 @@ RUN apk add --no-cache nginx curl unzip \
     && rm -rf "${ARCHIVE}" SHA256SUMS "rclone-v${RCLONE_VERSION}-linux-${RCLONE_ARCH}"
 
 COPY rootfs /
+COPY --from=webui /webui/dist /usr/share/nginx/html
 
 RUN mkdir -p /run/nginx /var/lib/nginx/tmp/client_body /var/lib/nginx/tmp/proxy \
     && chmod 0755 \

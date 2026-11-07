@@ -4,6 +4,4 @@ exec /usr/local/bin/rclone rcd \
   --cache-dir=/data/cache \
   --rc-addr=127.0.0.1:5572 \
   --rc-no-auth \
-  --rc-web-gui \
-  --rc-web-gui-no-open-browser \
   --log-level=INFO

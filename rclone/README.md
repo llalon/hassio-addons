@@ -1,9 +1,10 @@
 # Rclone Home Assistant add-on
 
 Runs the latest pinned stable Rclone release as a persistent `rcd` daemon and
-serves Rclone's embedded web UI in Home Assistant through Ingress. The sidebar
-entry is available to administrators and can be enabled from the add-on's
-**Show in sidebar** setting.
+serves the official Rclone web UI through Home Assistant Ingress. The UI is
+built with a dynamic base path so its routes and API calls stay under the
+Ingress URL. The sidebar entry is available to administrators and can be
+enabled from the add-on's **Show in sidebar** setting.
 
 ## Install
 
@@ -31,17 +32,17 @@ The add-on exposes these Home Assistant folders inside the container:
 | `/media` | Media | Read/write |
 | `/backup` | Backups | Read only |
 
-The embedded Rclone UI can access any files visible to the add-on. Treat
+The Rclone web UI can access any files visible to the add-on. Treat
 changes, syncs, and deletes as operations performed with the permissions above.
 
 ## Network and security
 
-The add-on does not publish a host port. Rclone's remote-control API listens
-only on container loopback, and an Nginx proxy accepts UI traffic only from the
-Home Assistant Supervisor Ingress address. Home Assistant handles user
-authentication for the sidebar UI. Do not change the Rclone API listener to
-`0.0.0.0` or expose port 5572; the remote-control API can execute commands and
-read or write files as the add-on.
+The add-on does not publish a host port. Nginx accepts traffic only from the
+Home Assistant Supervisor Ingress address, serves the UI, and forwards API
+requests to Rclone on container loopback. Rclone's API has no separate login;
+Home Assistant handles authentication for the Ingress session. Do not change
+the Rclone API listener to `0.0.0.0` or expose port 5572; the API can execute
+commands and read or write files as the add-on.
 
 ## Updating Rclone
 
