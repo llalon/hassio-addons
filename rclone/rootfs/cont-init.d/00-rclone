@@ -1,12 +1,6 @@
 #!/usr/bin/with-contenv sh
 set -eu
 
-mkdir -p /data/cache /config /share /media /backup /homeassistant
-
-# Migrate the previous private data-dir config if this add-on is upgraded.
-if [ ! -e /config/rclone.conf ] && [ -e /data/rclone.conf ]; then
-  cp -p /data/rclone.conf /config/rclone.conf
-fi
-
+mkdir -p /data/cache
 touch /config/rclone.conf
 chmod 0600 /config/rclone.conf

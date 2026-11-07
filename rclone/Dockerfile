@@ -1,4 +1,4 @@
-ARG BUILD_FROM=ghcr.io/home-assistant/base:3.22
+ARG BUILD_FROM=ghcr.io/home-assistant/base:3.24
 FROM ${BUILD_FROM}
 
 ARG BUILD_ARCH
@@ -7,8 +7,6 @@ ARG RCLONE_VERSION=1.76.0
 RUN apk add --no-cache nginx curl unzip \
     && case "${BUILD_ARCH}" in \
          amd64) RCLONE_ARCH=amd64 ;; \
-         aarch64) RCLONE_ARCH=arm64 ;; \
-         armv7) RCLONE_ARCH=arm-v7 ;; \
          *) echo "Unsupported architecture: ${BUILD_ARCH}" >&2; exit 1 ;; \
        esac \
     && ARCHIVE="rclone-v${RCLONE_VERSION}-linux-${RCLONE_ARCH}.zip" \

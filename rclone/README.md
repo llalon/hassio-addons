@@ -18,8 +18,7 @@ Rclone's configuration is saved persistently at `/config/rclone.conf`. On the
 Home Assistant host, the file lives under `/app_configs/<repository>_rclone/`;
 the repository identifier is `local` for local installs and a generated
 identifier for GitHub installs. Use the web UI to configure remotes and run
-Rclone operations, or edit this file directly. The add-on migrates an existing
-`/data/rclone.conf` to the new location the first time it starts after upgrade.
+Rclone operations, or edit this file directly.
 
 The config contains remote credentials. Rclone obfuscates some secret values,
 but that is not encryption; protect this file and any backups that contain it.
@@ -31,7 +30,6 @@ The add-on exposes these Home Assistant folders inside the container:
 | `/share` | Share | Read/write |
 | `/media` | Media | Read/write |
 | `/backup` | Backups | Read only |
-| `/homeassistant` | Home Assistant configuration | Read only |
 
 The embedded Rclone UI can access any files visible to the add-on. Treat
 changes, syncs, and deletes as operations performed with the permissions above.
