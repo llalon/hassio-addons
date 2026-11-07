@@ -1,6 +1,5 @@
 #!/usr/bin/with-contenv sh
 exec /usr/local/bin/rclone rcd \
-  --config=/config/rclone.conf \
   --cache-dir=/data/cache \
   --rc-addr=127.0.0.1:5572 \
   --rc-no-auth \

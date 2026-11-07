@@ -17,8 +17,6 @@ FROM ${BUILD_FROM}
 ARG BUILD_ARCH
 ARG RCLONE_VERSION=1.76.0
 
-ENV RCLONE_CONFIG=/config/rclone.conf
-
 RUN apk add --no-cache nginx curl unzip \
     && case "${BUILD_ARCH}" in \
          amd64) RCLONE_ARCH=amd64 ;; \

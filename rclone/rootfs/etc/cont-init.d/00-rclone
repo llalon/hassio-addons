@@ -1,6 +1,6 @@
 #!/usr/bin/with-contenv sh
 set -eu
 
-mkdir -p /data/cache
-touch /config/rclone.conf
-chmod 0600 /config/rclone.conf
+mkdir -p /data/cache /root/.config/rclone
+touch /root/.config/rclone/rclone.conf
+chmod 0600 /root/.config/rclone/rclone.conf
