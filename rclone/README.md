@@ -21,6 +21,11 @@ the repository identifier is `local` for local installs and a generated
 identifier for GitHub installs. Use the web UI to configure remotes and run
 Rclone operations, or edit this file directly.
 
+Rclone's complete configuration file is `rclone.conf`, which uses Rclone's
+INI-style format. A provider credential file named `config.json` is not an
+Rclone configuration file; enter it through that provider's configuration
+option instead.
+
 The config contains remote credentials. Rclone obfuscates some secret values,
 but that is not encryption; protect this file and any backups that contain it.
 
@@ -31,6 +36,10 @@ The add-on exposes these Home Assistant folders inside the container:
 | `/share` | Share | Read/write |
 | `/media` | Media | Read/write |
 | `/backup` | Backups | Read only |
+
+In the web UI, use `/share`, `/media`, `/backup`, or `/config` for local
+paths. Paths such as `/root/Desktop` and `/root/Downloads` do not exist in the
+app container.
 
 The Rclone web UI can access any files visible to the add-on. Treat
 changes, syncs, and deletes as operations performed with the permissions above.
