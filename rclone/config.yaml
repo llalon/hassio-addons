@@ -1,11 +1,13 @@
 name: Rclone
-version: 0.0.3
+version: 0.2.1
 slug: rclone
 description: Rclone daemon and web UI, integrated with Home Assistant Ingress.
 url: https://github.com/llalon/hassio-addons
 startup: application
 boot: auto
 init: false
+services:
+  - mqtt:want
 arch:
   - amd64
 ingress: true
@@ -14,7 +16,18 @@ ingress_stream: true
 panel_icon: mdi:cloud-sync
 panel_title: Rclone
 panel_admin: true
-ports: {}
+options:
+  topic_prefix: rclone
+  job_expire_seconds: 3600
+  poll_interval_seconds: 30
+schema:
+  mqtt_host: str?
+  mqtt_port: port?
+  mqtt_username: str?
+  mqtt_password: password?
+  topic_prefix: str
+  job_expire_seconds: int(60,86400)
+  poll_interval_seconds: int(5,3600)
 map:
   - type: data
     path: /root/.cache/rclone
@@ -28,5 +41,3 @@ map:
     read_only: false
   - type: backup
     read_only: true
-options: {}
-schema: {}

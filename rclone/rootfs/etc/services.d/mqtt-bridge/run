@@ -1,0 +1,16 @@
+#!/command/with-contenv bashio
+# shellcheck shell=bash
+
+# Prefer the MQTT service provided by another add-on (e.g. the Mosquitto
+# broker add-on); fall back to the manual mqtt_* options.
+if bashio::services.available "mqtt"; then
+  export MQTT_HOST="$(bashio::services mqtt 'host')"
+  export MQTT_PORT="$(bashio::services mqtt 'port')"
+  export MQTT_USERNAME="$(bashio::services mqtt 'username')"
+  export MQTT_PASSWORD="$(bashio::services mqtt 'password')"
+  bashio::log.info "mqtt-bridge: using MQTT service provided by another add-on (${MQTT_HOST}:${MQTT_PORT})"
+else
+  bashio::log.info "mqtt-bridge: no MQTT service available, using manual mqtt_* options"
+fi
+
+exec /usr/local/bin/mqtt-bridge

@@ -1,4 +1,4 @@
-#!/usr/bin/with-contenv sh
+#!/usr/bin/with-contenv bashio
 set -eu
 
 mkdir -p /data/cache /root/.config/rclone

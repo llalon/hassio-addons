@@ -1,0 +1,19 @@
+configuration:
+  mqtt_host:
+    name: MQTT host
+    description: Hostname of your MQTT broker. The default `core-mosquitto` matches the Mosquitto broker add-on.
+  mqtt_port:
+    name: MQTT port
+    description: Port of your MQTT broker.
+  mqtt_username:
+    name: MQTT username
+    description: Username for the MQTT broker. Leave empty if the broker allows anonymous access.
+  mqtt_password:
+    name: MQTT password
+    description: Password for the MQTT broker.
+  job_expire_seconds:
+    name: Job expiry (seconds)
+    description: How long finished rclone jobs stay queryable by the bridge. Applied to rclone as --rc-job-expire-duration.
+  poll_interval_seconds:
+    name: Poll interval (seconds)
+    description: How often running jobs are polled for status and stats.

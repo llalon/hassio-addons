@@ -1,5 +1,16 @@
-#!/usr/bin/with-contenv sh
+#!/command/with-contenv bashio
+# shellcheck shell=bash
+
+# Keep finished async jobs queryable long enough for the MQTT bridge to poll
+# their final status (rclone's default of 1m is too short). rclone wants a
+# Go-style duration, so convert seconds to hours/minutes.
+JOB_EXPIRE="$(bashio::config 'job_expire_seconds')"
+if [ -z "${JOB_EXPIRE}" ] || [ "${JOB_EXPIRE}" = "null" ] || [ "${JOB_EXPIRE}" -lt 60 ] 2>/dev/null; then
+  JOB_EXPIRE="3600"
+fi
+
 exec /usr/local/bin/rclone rcd \
   --rc-addr=127.0.0.1:5572 \
   --rc-no-auth \
+  --rc-job-expire-duration="$((JOB_EXPIRE / 60))m" \
   --log-level=INFO

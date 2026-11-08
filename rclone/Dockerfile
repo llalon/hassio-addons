@@ -1,16 +1,21 @@
 ARG BUILD_FROM=ghcr.io/home-assistant/base:3.24
 FROM node:24-alpine3.24 AS webui
 
-ARG RCLONE_WEB_VERSION=1.1.13
-
 WORKDIR /webui
-RUN apk add --no-cache curl tar \
-    && curl -fsSL "https://codeload.github.com/rclone/rclone-web/tar.gz/refs/tags/${RCLONE_WEB_VERSION}" \
-       | tar -xz --strip-components=1
-COPY patch-webui.mjs /tmp/patch-webui.mjs
-RUN npm ci \
-    && node /tmp/patch-webui.mjs \
-    && npm run build
+# Fork of rclone/rclone-web with Home Assistant ingress support (branch: hassio),
+# vendored as the git submodule at rclone/webui.
+COPY webui/package.json webui/package-lock.json ./
+RUN npm ci
+COPY webui/ ./
+RUN npm run build
+
+FROM golang:1.26-alpine3.24 AS mqttbridge
+
+WORKDIR /src
+COPY mqtt-bridge/go.mod mqtt-bridge/go.sum ./
+RUN go mod download
+COPY mqtt-bridge/ ./
+RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /mqtt-bridge .
 
 FROM ${BUILD_FROM}
 
@@ -32,9 +37,11 @@ RUN apk add --no-cache nginx curl unzip \
 
 COPY rootfs /
 COPY --from=webui /webui/dist /usr/share/nginx/html
+COPY --from=mqttbridge /mqtt-bridge /usr/local/bin/mqtt-bridge
 
 RUN mkdir -p /run/nginx /var/lib/nginx/tmp/client_body /var/lib/nginx/tmp/proxy \
     && chmod 0755 \
        /etc/cont-init.d/00-rclone \
        /etc/services.d/rclone/run \
-       /etc/services.d/nginx/run
+       /etc/services.d/nginx/run \
+       /etc/services.d/mqtt-bridge/run

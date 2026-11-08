@@ -1,5 +1,8 @@
 # Rclone Home Assistant add-on
 
+> [!WARNING]
+> Do not use this yet!
+
 Runs the latest pinned stable Rclone release as a persistent `rcd` daemon and
 serves the official Rclone web UI through Home Assistant Ingress. The UI is
 built with a dynamic base path so its routes and API calls stay under the
@@ -43,6 +46,104 @@ In the web UI, use `/share`, `/media`, `/backup`, or
 
 The Rclone web UI can access any files visible to the add-on. Treat
 changes, syncs, and deletes as operations performed with the permissions above.
+
+## MQTT job control (optional)
+
+The add-on includes a small Go bridge that runs rclone commands on request
+over MQTT. Home Assistant automations publish a command to a topic; the
+bridge runs it against the local rclone daemon and publishes status and
+stats back to MQTT. No host ports are published, and nothing is scheduled by
+the add-on itself — **when** a job runs is entirely up to your automations.
+
+Requirements: an MQTT broker reachable from the add-on and the MQTT
+integration configured in Home Assistant.
+
+**No configuration is needed** when you use the Mosquitto broker add-on (or
+any add-on that provides the MQTT service): the connection is detected
+automatically through the Supervisor. The `mqtt_host` / `mqtt_port` /
+`mqtt_username` / `mqtt_password` options on the **Configuration** tab are
+only needed to override auto-detection, for example to use an external
+broker.
+
+Other options:
+
+- `topic_prefix` (default `rclone`) — prefix for all MQTT topics below.
+- `poll_interval_seconds` (default 30) — how often running jobs are polled
+  for status/stats.
+- `job_expire_seconds` (default 3600) — how long finished jobs stay
+  queryable by the bridge; applied to rclone as `--rc-job-expire-duration`.
+
+The topics below assume the default `rclone` prefix; if you change
+`topic_prefix`, substitute it for `rclone`.
+
+### Running a job from Home Assistant
+
+Publish a JSON message to the topic `rclone/run`:
+
+```json
+{
+  "name": "Documents Backup",
+  "command": "sync/sync",
+  "command_args": {
+    "srcFs": "/share/documents",
+    "dstFs": "/share/backups/documents"
+  }
+}
+```
+
+- `command` is any [rc method](https://rclone.org/rc/#supported-commands).
+- `command_args` is that method's
+  [parameters](https://rclone.org/rc/#json-input); `_async` is added
+  automatically.
+- `name` is optional and scopes the status/stats topics (defaults to the
+  command).
+
+In an automation, use the `mqtt.publish` action:
+
+```yaml
+automation:
+  - alias: Nightly documents backup
+    triggers:
+      - trigger: time
+        at: "03:00:00"
+    actions:
+      - action: mqtt.publish
+        data:
+          topic: rclone/run
+          payload: >-
+            {"name": "Documents Backup", "command": "sync/sync",
+             "command_args": {"srcFs": "/share/documents",
+                              "dstFs": "/share/backups/documents"}}
+```
+
+### Monitoring
+
+The bridge publishes retained JSON messages:
+
+- `rclone/<name>/status` — `{"state": "running"|"finished"|"error", "jobid": N, "error": "..."}`
+- `rclone/<name>/stats` — `{"jobid": N, "bytes": ..., "total_bytes": ..., "speed": ..., "progress": ..., "eta": ..., "errors": ...}` while running
+- `rclone/bridge/availability` — `online`/`offline`
+
+To get notified on failure, trigger on `rclone/documents_backup/status`
+containing `"state": "error"`, e.g. with an MQTT trigger:
+
+```yaml
+automation:
+  - alias: Documents backup failed
+    triggers:
+      - trigger: mqtt
+        topic: rclone/documents_backup/status
+        value_template: "{{ value_json.state }}"
+        payload: "error"
+    actions:
+      - action: notify.notify
+        data:
+          title: Documents backup failed
+          message: "{{ trigger.payload_json.error }}"
+```
+
+More examples, including rate-limited backups and retention pruning, are in
+[docs/examples.md](docs/examples.md).
 
 ## Network and security
 
