@@ -99,8 +99,9 @@ Open **Jobs → New job** in the web UI. The form has three fields:
 ```
 
 Use **Edit** to change the JSON or schedule, **Run now** to queue a run, and
-**Delete** to remove the definition and schedule. Definitions are saved in the SQLite database
-`/data/jobs.db` and restored when the add-on restarts. Deleting a definition
+**Delete** to remove the definition and schedule. Definitions are saved in the SQLite
+database `/root/.config/rclone/jobs/jobs.db`, inside the persistent Rclone
+configuration folder, and restored when the add-on restarts. Deleting a definition
 leaves already running transfers alone.
 
 To trigger a saved job from Home Assistant, publish a non-retained message to

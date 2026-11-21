@@ -239,7 +239,7 @@ func TestNameOnlyRunResolvesSavedCommand(t *testing.T) {
 }
 
 func TestSQLiteDatabaseSurvivesRestart(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "jobs.db")
+	path := filepath.Join(t.TempDir(), "rclone", "jobs", "jobs.db")
 	s, err := OpenJobStore(path, nil)
 	if err != nil {
 		t.Fatal(err)
