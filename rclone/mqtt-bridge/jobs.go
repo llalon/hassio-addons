@@ -57,12 +57,13 @@ func validateJob(j NamedJob) error {
 // JobStore serializes durable writes and updates the in-process scheduler only
 // after the new definitions have been saved successfully.
 type JobStore struct {
-	mu      sync.RWMutex
-	db      *sql.DB
-	jobs    map[string]NamedJob
-	cron    *cron.Cron
-	entries map[string]cron.EntryID
-	trigger func(string) error
+	mu          sync.RWMutex
+	db          *sql.DB
+	jobs        map[string]NamedJob
+	cron        *cron.Cron
+	entries     map[string]cron.EntryID
+	trigger     func(string) error
+	runningJobs func() map[string][]int64
 }
 
 func OpenJobStore(path string, trigger func(string) error) (*JobStore, error) {
@@ -232,7 +233,25 @@ func (s *JobStore) Delete(name string) error {
 
 func (s *JobStore) Handler() http.Handler {
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /api/jobs", func(w http.ResponseWriter, r *http.Request) { writeJSON(w, 200, s.List()) })
+	mux.HandleFunc("GET /api/jobs", func(w http.ResponseWriter, r *http.Request) {
+		type jobState struct {
+			NamedJob
+			RunningJobIDs []int64 `json:"running_job_ids"`
+		}
+		running := map[string][]int64{}
+		if s.runningJobs != nil {
+			running = s.runningJobs()
+		}
+		out := make([]jobState, 0)
+		for _, j := range s.List() {
+			ids := running[j.Name]
+			if ids == nil {
+				ids = []int64{}
+			}
+			out = append(out, jobState{NamedJob: j, RunningJobIDs: ids})
+		}
+		writeJSON(w, 200, out)
+	})
 	save := func(create bool) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			var j NamedJob

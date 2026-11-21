@@ -224,6 +224,19 @@ func TestNameOnlyRunResolvesSavedCommand(t *testing.T) {
 	defer b.cancel()
 	b.jobs = s
 	b.onRun([]byte(`{"name":"Documents Backup","command_args":{"srcFs":"injected"}}`))
+	s.runningJobs = b.runningJobIDs
+	w := httptest.NewRecorder()
+	s.Handler().ServeHTTP(w, httptest.NewRequest("GET", "/api/jobs", nil))
+	var listed []struct {
+		Name string  `json:"name"`
+		IDs  []int64 `json:"running_job_ids"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &listed); err != nil {
+		t.Fatal(err)
+	}
+	if len(listed) != 1 || listed[0].Name != j.Name || len(listed[0].IDs) != 1 || listed[0].IDs[0] != 42 {
+		t.Fatalf("missing runtime association: %s", w.Body.String())
+	}
 	if got["srcFs"] != "/share/docs" || got["_async"] != true || b.running[42].name != j.Name {
 		t.Fatalf("resolved request: %+v", got)
 	}

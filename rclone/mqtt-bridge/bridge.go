@@ -228,3 +228,14 @@ func errSuffix(msg string) string {
 	}
 	return ": " + strings.TrimSpace(msg)
 }
+
+// runningJobIDs links saved definitions to live RC jobs for the combined UI.
+func (b *Bridge) runningJobIDs() map[string][]int64 {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	out := make(map[string][]int64)
+	for id, job := range b.running {
+		out[job.name] = append(out[job.name], id)
+	}
+	return out
+}

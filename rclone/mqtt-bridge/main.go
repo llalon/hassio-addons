@@ -47,6 +47,7 @@ func main() {
 	}
 	b := NewBridge(cfg, rc, mqtt)
 	b.jobs = jobs
+	jobs.runningJobs = b.runningJobIDs
 	if err := b.Start(); err != nil {
 		log.Fatalf("bridge: %v", err)
 	}

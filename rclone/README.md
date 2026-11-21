@@ -98,7 +98,7 @@ Open **Jobs → New job** in the web UI. The form has three fields:
 }
 ```
 
-Use **Edit** to change the JSON or schedule, **Run now** to queue a run, and
+Use **Edit** to change the JSON or schedule, **Run** to queue a run, and
 **Delete** to remove the definition and schedule. Definitions are saved in the SQLite
 database `/root/.config/rclone/mqtt-bridge/data.db`, inside the persistent Rclone
 configuration folder, and restored when the add-on restarts. Deleting a definition
@@ -111,7 +111,7 @@ To trigger a saved job from Home Assistant, publish a non-retained message to
 {"name": "Documents Backup"}
 ```
 
-The cron scheduler and **Run now** publish this same name-only MQTT message.
+The cron scheduler and **Run** publish this same name-only MQTT message.
 The bridge resolves the saved command and publishes status/stats as usual.
 An MQTT broker must be connected to trigger runs; editing definitions works
 while the broker is unavailable. Missed schedules are not replayed after
@@ -123,7 +123,7 @@ The Go MQTT service owns the jobs API on `127.0.0.1:5573`. Nginx forwards
 
 | Method | Path | Action |
 | --- | --- | --- |
-| GET | `/api/jobs` | List definitions |
+| GET | `/api/jobs` | List definitions and their active `running_job_ids` |
 | POST | `/api/jobs` | Create a definition |
 | PUT | `/api/jobs/{name}` | Update a definition |
 | DELETE | `/api/jobs/{name}` | Delete a definition |
