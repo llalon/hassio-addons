@@ -52,8 +52,8 @@ changes, syncs, and deletes as operations performed with the permissions above.
 The add-on includes a small Go bridge that runs rclone commands on request
 over MQTT. Home Assistant automations publish a command to a topic; the
 bridge runs it against the local rclone daemon and publishes status and
-stats back to MQTT. No host ports are published, and nothing is scheduled by
-the add-on itself — **when** a job runs is entirely up to your automations.
+stats back to MQTT. Named jobs can also be saved and scheduled from the
+web UI. No host ports are published.
 
 Requirements: an MQTT broker reachable from the add-on and the MQTT
 integration configured in Home Assistant.
@@ -75,6 +75,63 @@ Other options:
 
 The topics below assume the default `rclone` prefix; if you change
 `topic_prefix`, substitute it for `rclone`.
+
+### Named jobs and cron schedules
+
+Open **Jobs → New job** in the web UI. The form has three fields:
+
+- **Name** — a unique display name, such as `Documents Backup`. Names that
+  produce the same MQTT status topic are rejected. Names stay fixed when editing.
+- **Cron schedule** — five fields: minute, hour, day of month, month, weekday.
+  For example, `0 3 * * *` runs daily at 03:00 in the add-on timezone.
+  Prefix with `CRON_TZ=America/Toronto` to use an explicit timezone:
+  `CRON_TZ=America/Toronto 0 3 * * *`. Leave blank for manual-only jobs.
+- **Command JSON** — the existing MQTT command format, without `name`:
+
+```json
+{
+  "command": "sync/copy",
+  "command_args": {
+    "srcFs": "/share/documents",
+    "dstFs": "remote:backup/documents"
+  }
+}
+```
+
+Use **Edit** to change the JSON or schedule, **Run now** to queue a run, and
+**Delete** to remove the definition and schedule. Definitions are saved in the SQLite database
+`/data/jobs.db` and restored when the add-on restarts. Deleting a definition
+leaves already running transfers alone.
+
+To trigger a saved job from Home Assistant, publish a non-retained message to
+`rclone/run` (or your configured topic prefix):
+
+```json
+{"name": "Documents Backup"}
+```
+
+The cron scheduler and **Run now** publish this same name-only MQTT message.
+The bridge resolves the saved command and publishes status/stats as usual.
+An MQTT broker must be connected to trigger runs; editing definitions works
+while the broker is unavailable. Missed schedules are not replayed after
+restarts or broker outages, and overlapping runs are allowed. Retained run
+messages are ignored on subscription to avoid replaying old commands.
+
+The Go MQTT service owns the jobs API on `127.0.0.1:5573`. Nginx forwards
+`/api/` under the same Home Assistant Ingress URL used by the UI:
+
+| Method | Path | Action |
+| --- | --- | --- |
+| GET | `/api/jobs` | List definitions |
+| POST | `/api/jobs` | Create a definition |
+| PUT | `/api/jobs/{name}` | Update a definition |
+| DELETE | `/api/jobs/{name}` | Delete a definition |
+| POST | `/api/jobs/{name}/run` | Queue a name-only MQTT trigger |
+
+Create/update bodies contain `name`, `schedule`, and `payload` (a JSON object
+in the command format above). URL-encode the job name in API paths. A run
+returns HTTP 202 when MQTT accepts the trigger; execution results arrive on
+the usual status topics. The API inherits Home Assistant Ingress access control.
 
 ### Running a job from Home Assistant
 

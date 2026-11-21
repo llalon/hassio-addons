@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"sync"
@@ -63,6 +64,7 @@ func (m *MQTT) onConnect(c paho.Client) {
 	if h != nil {
 		m.subscribeRun()
 	}
+	m.Publish(m.bridgeAvailabilityTopic(), "online")
 }
 
 // WaitConnected blocks until the first broker connection is established.
@@ -99,7 +101,7 @@ func (m *MQTT) subscribeRun() {
 		m.mu.Lock()
 		h := m.runHandler
 		m.mu.Unlock()
-		if h != nil {
+		if h != nil && !msg.Retained() {
 			h(msg.Payload())
 		}
 	})
@@ -122,4 +124,20 @@ func (m *MQTT) statsTopic(name string) string {
 
 func (m *MQTT) bridgeAvailabilityTopic() string {
 	return m.cfg.TopicPrefix + "/bridge/availability"
+}
+
+// TriggerNamed uses the same non-retained MQTT message for API and cron runs.
+func (m *MQTT) TriggerNamed(name string) error {
+	if !m.client.IsConnected() {
+		return fmt.Errorf("MQTT broker is disconnected")
+	}
+	payload, err := json.Marshal(map[string]string{"name": name})
+	if err != nil {
+		return err
+	}
+	tok := m.client.Publish(m.runTopic(), 1, false, payload)
+	if !tok.WaitTimeout(10 * time.Second) {
+		return fmt.Errorf("MQTT publish timed out")
+	}
+	return tok.Error()
 }

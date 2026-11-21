@@ -26,6 +26,7 @@ type Bridge struct {
 	cfg  *Config
 	rc   *RCClient
 	mqtt *MQTT
+	jobs *JobStore
 
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -42,13 +43,10 @@ func NewBridge(cfg *Config, rc *RCClient, mqtt *MQTT) *Bridge {
 
 // Start subscribes to the run topic and begins polling.
 func (b *Bridge) Start() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-	defer cancel()
-	if err := b.mqtt.WaitConnected(ctx); err != nil {
-		return fmt.Errorf("mqtt: %w", err)
-	}
 	b.mqtt.SubscribeRun(b.onRun)
-	b.mqtt.Publish(b.mqtt.bridgeAvailabilityTopic(), "online")
+	if b.mqtt.client.IsConnected() {
+		b.mqtt.Publish(b.mqtt.bridgeAvailabilityTopic(), "online")
+	}
 
 	b.wg.Add(1)
 	go func() {
@@ -73,8 +71,22 @@ func (b *Bridge) onRun(payload []byte) {
 		return
 	}
 	if req.Command == "" {
-		log.Printf("run: missing command")
-		return
+		if b.jobs == nil {
+			log.Printf("run: missing command")
+			return
+		}
+		job, ok := b.jobs.Get(req.Name)
+		if !ok {
+			b.publishStatus(req.Name, 0, "error", "unknown named job")
+			return
+		}
+		name := req.Name
+		req = RunRequest{}
+		if err := json.Unmarshal(job.Payload, &req); err != nil {
+			log.Printf("run: invalid stored payload: %v", err)
+			return
+		}
+		req.Name = name
 	}
 	if req.Name == "" {
 		req.Name = req.Command
