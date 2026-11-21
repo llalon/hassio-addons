@@ -100,7 +100,7 @@ Open **Jobs → New job** in the web UI. The form has three fields:
 
 Use **Edit** to change the JSON or schedule, **Run now** to queue a run, and
 **Delete** to remove the definition and schedule. Definitions are saved in the SQLite
-database `/root/.config/rclone/jobs/jobs.db`, inside the persistent Rclone
+database `/root/.config/rclone/mqtt-bridge/data.db`, inside the persistent Rclone
 configuration folder, and restored when the add-on restarts. Deleting a definition
 leaves already running transfers alone.
 

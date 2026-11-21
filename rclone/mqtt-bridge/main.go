@@ -39,7 +39,7 @@ func main() {
 
 	jobsPath := os.Getenv("JOBS_FILE")
 	if jobsPath == "" {
-		jobsPath = "/root/.config/rclone/jobs/jobs.db"
+		jobsPath = "/root/.config/rclone/mqtt-bridge/data.db"
 	}
 	jobs, err := OpenJobStore(jobsPath, mqtt.TriggerNamed)
 	if err != nil {
